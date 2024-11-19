@@ -1,0 +1,9 @@
+[package]
+name = "football-rpg"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+colored = "2.1.0"
+strum = "0.26.3"
+strum_macros = "0.26.4"
