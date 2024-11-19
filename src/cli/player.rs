@@ -40,7 +40,7 @@ pub fn load(){
 
 //attribute_prompt(prompt: &String, buf: &mut String) -> Option<u16>
 //params:
-//  - //params:
+//  params:
 //  - prompt: name of the attribute
 //  - buf: buffer for the user input
 //returns: Ok(u32) if valid input or None

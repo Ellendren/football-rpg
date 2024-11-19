@@ -123,7 +123,7 @@ impl Player {
     }
 
     //pub fn save(&self) -> Result<(), Error>
-    //description: saves the player to a common file
+    //description: saves the player to a file
     //returns: Ok if the save was succesful;
     pub fn save(&self) -> Result<(), Error> {
         let path = match self.save_file_name(None) {
@@ -189,7 +189,7 @@ impl Player {
             None => {
                 match super::target(){
                     Ok(mut tar) => {
-                        tar.push_str("-bin");
+                        tar.push_str(&format!("-bin"));
                         Ok(tar)
                     },
                     Err(e) => return Err(e)
@@ -217,7 +217,7 @@ impl Player {
             }
         }
 
-        let file_name = format!("/{}.bin", Player::BASE_SVFILE);
+        let file_name = format!("/{}_{}_{}.bin", self.lname, self.fname, self.id);
         save_path = save_path + &file_name;
 
         Ok(save_path)
