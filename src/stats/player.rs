@@ -1,3 +1,4 @@
+use std::fs::DirEntry;
 use std::io::{Read, Write};
 use std::fmt;
 
@@ -152,11 +153,35 @@ impl Player {
         Ok(())
     }
 
+    //list_players()
+    //description: show save player names
+    //params:
+    //  - path: path to the player save path 
+    //returns: Vecor of strings with player names in path
+    pub fn list_players(path: Option<String>) -> Result<Vec<String>, Error>{
+        let path = match Player::dafault_save_name(None) {
+            Ok(path) => path,
+            Err(_) => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
+        };
+
+        let dir = match std::fs::read_dir(path){
+            Ok(d) => d,
+            Err(e) => return Err(Error::Load { err_msg: format!("Cant read dir: {}", e.to_string()) })
+        };
+
+        let files: Vec<String> = dir
+            .filter(|e| e.is_ok())
+            .map(|e| e.unwrap().file_name().into_string().unwrap_or("Error reading file".to_string()))
+            .collect();
+
+        Ok(files)
+    }
+
     //fn load() -> Result<(), Error>
     //description: reads player from default location
     //returns: the loaded player
     pub fn load(&mut self) -> Result<(), Error> {
-        let path = match self.save_file_name(None) {
+        let path = match Player::dafault_save_name(None) {
             Ok(path) => path,
             Err(_) => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
         };
@@ -181,7 +206,7 @@ impl Player {
 
     //dafault_save_name()
     //returns the default name for a save file for the player class
-    fn dafault_save_name(&self, save_path: Option<String>) -> Result<String, super::Error>{
+    fn dafault_save_name(save_path: Option<String>) -> Result<String, super::Error>{
         match save_path {
             Some(path) => {
                 Ok(path)
@@ -189,7 +214,7 @@ impl Player {
             None => {
                 match super::target(){
                     Ok(mut tar) => {
-                        tar.push_str(&format!("-bin"));
+                        tar.push_str(&format!("-bin/{}", Player::BASE_SVFILE));
                         Ok(tar)
                     },
                     Err(e) => return Err(e)
@@ -204,7 +229,7 @@ impl Player {
     //  save_path: path to the directory for the save file, None for defaulr path
     //returns: the path to the save file
     fn save_file_name(&self, save_path: Option<String>) -> Result<String, Error> {
-        let mut save_path = match self.dafault_save_name(save_path) {
+        let mut save_path = match Player::dafault_save_name(save_path) {
             Ok(path) => path,
             Err(e) => return Err(Error::Save { err_msg: format!("failed to get defaut path for player {}: {}", self.id, e.err_msg) })
         };
@@ -217,7 +242,7 @@ impl Player {
             }
         }
 
-        let file_name = format!("/{}_{}_{}.bin", self.lname, self.fname, self.id);
+        let file_name = format!("/{}_{}_{}.{}", self.lname, self.fname, self.id, Player::BASE_SVFILE);
         save_path = save_path + &file_name;
 
         Ok(save_path)

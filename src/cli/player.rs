@@ -26,16 +26,22 @@ pub fn new() {
 }
 
 pub fn load(){
-    let mut player = Player::default();
-    match player.load(){
-        Ok(_) => {},
+    // get player files
+    let files = match Player::list_players(None){
+        Ok(f) => f,
         Err(e) => {
             eprintln!("Error {:?}", e);
             return;
         }
     };
 
-    println!("{:?}", player);
+    // print playes files
+    println!("Available: players");
+    for (i, file) in files.iter().enumerate() {
+        println!("\t{}) {}", i+1, file);
+    }
+    let mut buf= String::new();
+    let pick = super::input_prompt(&"Select player to load by number".to_string(), &mut buf);
 }
 
 //attribute_prompt(prompt: &String, buf: &mut String) -> Option<u16>
