@@ -1,4 +1,3 @@
-use std::fs::DirEntry;
 use std::io::{Read, Write};
 use std::fmt;
 
@@ -59,6 +58,19 @@ impl HPStream {
         let mut curr = self.curr.to_vec();
         raw.append(&mut curr);
         raw
+    }
+
+    //to_hp(&self)
+    //description: converts the values of self into a HP struct
+    fn to_hp(&self) -> HP {
+        let mut hp = HP{max: 0, curr: 0};
+
+        unsafe {
+            hp.max = super::util::u8array_to_u32(&self.max);
+            hp.curr = super::util::u8array_to_i64(&self.curr);
+        }
+
+        hp
     }
 }
 
@@ -157,8 +169,8 @@ impl Player {
     //description: show save player names
     //params:
     //  - path: path to the player save path 
-    //returns: Vecor of strings with player names in path
-    pub fn list_players(path: Option<String>) -> Result<Vec<String>, Error>{
+    //returns: Vecor of DirEntrys with player names in dir given by the path param
+    pub fn list_players(path: Option<String>) -> Result<Vec<std::fs::DirEntry>, Error>{
         let path = match Player::dafault_save_name(None) {
             Ok(path) => path,
             Err(_) => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
@@ -169,21 +181,22 @@ impl Player {
             Err(e) => return Err(Error::Load { err_msg: format!("Cant read dir: {}", e.to_string()) })
         };
 
-        let files: Vec<String> = dir
+        let files: Vec<std::fs::DirEntry> = dir
             .filter(|e| e.is_ok())
-            .map(|e| e.unwrap().file_name().into_string().unwrap_or("Error reading file".to_string()))
+            .map(|e| e.unwrap())
             .collect();
 
         Ok(files)
     }
 
-    //fn load() -> Result<(), Error>
+    //fn load() -> Result<Player, Error>
     //description: reads player from default location
     //returns: the loaded player
-    pub fn load(&mut self) -> Result<(), Error> {
-        let path = match Player::dafault_save_name(None) {
-            Ok(path) => path,
-            Err(_) => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
+    pub fn load(path: Option<String>) -> Result<Player, Error> {
+        let mut player = Player::default();
+        let path = match path {
+            Some(p) => p,
+            None => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
         };
 
         let mut file = match std::fs::File::open(&path) {
@@ -198,10 +211,9 @@ impl Player {
                 return Err(Error::Load { err_msg });
             }
         };
+        player = PlayerByteStream::from_u8array(stream).to_player();
 
-        *self = PlayerByteStream::from_u8array(stream).to_player();
-
-        Ok(())
+        Ok(player)
     }
 
     //dafault_save_name()
@@ -334,6 +346,7 @@ impl PlayerByteStream {
             player.charisma = super::util::u8array_to_u16(&self.charisma);
             player.awarness = super::util::u8array_to_u16(&self.awarness);
         }
+        player.hp = self.hp.to_hp();
 
         player
     }
