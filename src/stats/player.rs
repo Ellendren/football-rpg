@@ -1,4 +1,3 @@
-use std::fs::DirEntry;
 use std::io::{Read, Write};
 use std::fmt;
 
@@ -60,6 +59,19 @@ impl HPStream {
         raw.append(&mut curr);
         raw
     }
+
+    //to_hp(&self)
+    //description: converts the values of self into a HP struct
+    fn to_hp(&self) -> HP {
+        let mut hp = HP{max: 0, curr: 0};
+
+        unsafe {
+            hp.max = super::util::u8array_to_u32(&self.max);
+            hp.curr = super::util::u8array_to_i64(&self.curr);
+        }
+
+        hp
+    }
 }
 
 #[derive(Debug)]
@@ -73,6 +85,30 @@ impl fmt::Display for IDType {
         match self {
             IDType::PC(id) => write!(f, "PC-{}", id),
             IDType::NPC(id) => write!(f, "NPC-{}", id)
+        }
+    }
+}
+
+impl IDType {
+    //from_string(id: String)
+    //param:
+    // - id: a sting in form NPC-<num> or PC-<num>
+    fn from_string(id: String) -> Self {
+        let id: Vec<&str> = id.split('-').collect();
+        if id.len() != 2 {
+            return IDType::NPC(0);
+        }
+        
+        match id[0] {
+            "NPC" => {
+                let num = id[1].parse::<u64>().unwrap_or(0);
+                return IDType::NPC(num);
+            },
+            "PC" => {
+                let num = id[1].parse::<u64>().unwrap_or(0);
+                return IDType::PC(num);
+            },
+            _ => return IDType::NPC(0)
         }
     }
 }
@@ -124,7 +160,7 @@ impl Player {
     }
 
     //pub fn save(&self) -> Result<(), Error>
-    //description: saves the player to a file
+    //description: saves the player to a file with the name <lname>_<fname>_<ID>.player
     //returns: Ok if the save was succesful;
     pub fn save(&self) -> Result<(), Error> {
         let path = match self.save_file_name(None) {
@@ -157,8 +193,8 @@ impl Player {
     //description: show save player names
     //params:
     //  - path: path to the player save path 
-    //returns: Vecor of strings with player names in path
-    pub fn list_players(path: Option<String>) -> Result<Vec<String>, Error>{
+    //returns: Vecor of DirEntrys with player names in dir given by the path param
+    pub fn list_players(path: Option<String>) -> Result<Vec<std::fs::DirEntry>, Error>{
         let path = match Player::dafault_save_name(None) {
             Ok(path) => path,
             Err(_) => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
@@ -169,23 +205,27 @@ impl Player {
             Err(e) => return Err(Error::Load { err_msg: format!("Cant read dir: {}", e.to_string()) })
         };
 
-        let files: Vec<String> = dir
+        let files: Vec<std::fs::DirEntry> = dir
             .filter(|e| e.is_ok())
-            .map(|e| e.unwrap().file_name().into_string().unwrap_or("Error reading file".to_string()))
+            .map(|e| e.unwrap())
             .collect();
 
         Ok(files)
     }
 
-    //fn load() -> Result<(), Error>
+    //fn load() -> Result<Player, Error>
     //description: reads player from default location
+    //params:
+    // - path: path to player file in form <lname>_<fname>_<ID>.player
     //returns: the loaded player
-    pub fn load(&mut self) -> Result<(), Error> {
-        let path = match Player::dafault_save_name(None) {
-            Ok(path) => path,
-            Err(_) => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
+    pub fn load(path: Option<String>) -> Result<Player, Error> {
+        let mut player = Player::default();
+        let path = match path {
+            Some(p) => p,
+            None => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
         };
 
+        let file_name = path.split('/').last();
         let mut file = match std::fs::File::open(&path) {
             Ok(f) => f,
             Err(e) => return Err(Error::Load { err_msg: format!("failed to open file, {}", e) })
@@ -198,10 +238,26 @@ impl Player {
                 return Err(Error::Load { err_msg });
             }
         };
+        player = PlayerByteStream::from_u8array(stream).to_player();
+        //get name and id from file name
+        match file_name {
+            Some(f) => {
+                //get rid of file extension
+                let name = f.split('.').nth(0).unwrap_or("");
 
-        *self = PlayerByteStream::from_u8array(stream).to_player();
+                //split lname, fname, id
+                let vals: Vec<&str> = name.split('_').collect();
+                if vals.len() != 3 {
+                    return Err(Error::Load { err_msg: "Invalid player file name, most be in form '<lname>_<fname>_<ID>.player'".to_string() });
+                }
+                player.lname = vals[0].to_string();
+                player.fname = vals[1].to_string();
+                player.id = IDType::from_string(vals[2].to_string());
+            },
+            None => {}
+        };
 
-        Ok(())
+        Ok(player)
     }
 
     //dafault_save_name()
@@ -334,6 +390,7 @@ impl PlayerByteStream {
             player.charisma = super::util::u8array_to_u16(&self.charisma);
             player.awarness = super::util::u8array_to_u16(&self.awarness);
         }
+        player.hp = self.hp.to_hp();
 
         player
     }

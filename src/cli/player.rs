@@ -38,10 +38,23 @@ pub fn load(){
     // print playes files
     println!("Available: players");
     for (i, file) in files.iter().enumerate() {
-        println!("\t{}) {}", i+1, file);
+        println!("\t{}) {:?}", i, file.file_name());
     }
     let mut buf= String::new();
-    let pick = super::input_prompt(&"Select player to load by number".to_string(), &mut buf);
+    let prompt = &"Select player to load by number".to_string();
+    let mut pick_str = super::input_prompt(prompt, &mut buf);
+    let mut pick = pick_str.parse::<usize>();
+    while !pick.is_ok() {
+        println!("{}", "Invailid input".blue());
+        pick_str = super::input_prompt(prompt, &mut buf);
+        pick = pick_str.parse::<usize>();
+    }
+    
+    let pick_i = pick.unwrap();
+    let path = Some(files[pick_i].path().to_string_lossy().to_string());
+
+    let player = Player::load(path); 
+    println!("{:?}", player);
 }
 
 //attribute_prompt(prompt: &String, buf: &mut String) -> Option<u16>

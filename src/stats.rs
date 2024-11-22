@@ -63,4 +63,24 @@ impl util {
         let num = byte_stream.align_to::<u16>().1;
         num[0]
     }
+
+    //u8array_to_u32(byte_stream: &[u8])
+    //descripts: turns a byte stream intp a u32
+    //params:
+    // - byte_stream: a 4 byte array represting a u32 var
+    //returns: the original u16 value 
+    pub unsafe fn u8array_to_u32(byte_stream: &[u8; 4]) -> u32{
+        let num: &[u32] = byte_stream.align_to::<u32>().1;
+        num[0]
+    }
+
+    //u8array_to_i64(byte_stream: &[u8])
+    //descripts: turns a byte stream intp a i64
+    //params:
+    // - byte_stream: a 4 byte array represting a u32 var
+    //returns: the original u16 value 
+    pub unsafe fn u8array_to_i64(byte_stream: &[u8; 8]) -> i64{
+        let num: &[i64] = byte_stream.align_to::<i64>().1;
+        num[0]
+    }
 }
