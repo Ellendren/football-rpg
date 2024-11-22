@@ -89,6 +89,30 @@ impl fmt::Display for IDType {
     }
 }
 
+impl IDType {
+    //from_string(id: String)
+    //param:
+    // - id: a sting in form NPC-<num> or PC-<num>
+    fn from_string(id: String) -> Self {
+        let id: Vec<&str> = id.split('-').collect();
+        if id.len() != 2 {
+            return IDType::NPC(0);
+        }
+        
+        match id[0] {
+            "NPC" => {
+                let num = id[1].parse::<u64>().unwrap_or(0);
+                return IDType::NPC(num);
+            },
+            "PC" => {
+                let num = id[1].parse::<u64>().unwrap_or(0);
+                return IDType::PC(num);
+            },
+            _ => return IDType::NPC(0)
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Player {
     speed: u16,
@@ -136,7 +160,7 @@ impl Player {
     }
 
     //pub fn save(&self) -> Result<(), Error>
-    //description: saves the player to a file
+    //description: saves the player to a file with the name <lname>_<fname>_<ID>.player
     //returns: Ok if the save was succesful;
     pub fn save(&self) -> Result<(), Error> {
         let path = match self.save_file_name(None) {
@@ -191,6 +215,8 @@ impl Player {
 
     //fn load() -> Result<Player, Error>
     //description: reads player from default location
+    //params:
+    // - path: path to player file in form <lname>_<fname>_<ID>.player
     //returns: the loaded player
     pub fn load(path: Option<String>) -> Result<Player, Error> {
         let mut player = Player::default();
@@ -199,6 +225,7 @@ impl Player {
             None => return Err(Error::Load { err_msg: format!("Failed to get load file path") })
         };
 
+        let file_name = path.split('/').last();
         let mut file = match std::fs::File::open(&path) {
             Ok(f) => f,
             Err(e) => return Err(Error::Load { err_msg: format!("failed to open file, {}", e) })
@@ -212,6 +239,23 @@ impl Player {
             }
         };
         player = PlayerByteStream::from_u8array(stream).to_player();
+        //get name and id from file name
+        match file_name {
+            Some(f) => {
+                //get rid of file extension
+                let name = f.split('.').nth(0).unwrap_or("");
+
+                //split lname, fname, id
+                let vals: Vec<&str> = name.split('_').collect();
+                if vals.len() != 3 {
+                    return Err(Error::Load { err_msg: "Invalid player file name, most be in form '<lname>_<fname>_<ID>.player'".to_string() });
+                }
+                player.lname = vals[0].to_string();
+                player.fname = vals[1].to_string();
+                player.id = IDType::from_string(vals[2].to_string());
+            },
+            None => {}
+        };
 
         Ok(player)
     }
