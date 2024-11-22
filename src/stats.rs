@@ -1,6 +1,7 @@
 use std::env::VarError;
 
 pub mod player;
+pub mod team;
 
 #[derive(Debug)]
 pub struct Error{
