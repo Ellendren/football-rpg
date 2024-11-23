@@ -284,7 +284,7 @@ impl Player {
     //params:
     //  save_path: path to the directory for the save file, None for defaulr path
     //returns: the path to the save file
-    fn save_file_name(&self, save_path: Option<String>) -> Result<String, Error> {
+    pub fn save_file_name(&self, save_path: Option<String>) -> Result<String, Error> {
         let mut save_path = match Player::dafault_save_name(save_path) {
             Ok(path) => path,
             Err(e) => return Err(Error::Save { err_msg: format!("failed to get defaut path for player {}: {}", self.id, e.err_msg) })
