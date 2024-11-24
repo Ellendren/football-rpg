@@ -1,5 +1,7 @@
 use std::default;
 
+use super::player;
+
 #[derive(Debug)]
 pub enum ErrorKind {
     Save,
@@ -125,6 +127,12 @@ impl Team {
             .collect();
 
         Ok(entries)
+    }
+
+    pub fn add_player(&mut self, player: super::player::Player) -> Result<(), Error>{
+        self.players.push(Box::new(player));
+
+        Ok(())
     }
 
     //load(path)
