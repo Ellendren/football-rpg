@@ -5,8 +5,6 @@ debug_target="$pwd/target/debug/football-rpg"
 release_target="$pwd/target/release/football-rpg"
 target=$debug_target
 
-quote=\"
-
 usage() { echo "Usage: $0 [options]"; exit 1; }
 
 while getopts "rh" o; do 

@@ -1,6 +1,7 @@
 #[derive(Debug)]
 pub enum ErrorKind {
     Save,
+    List_saves,
     Load
 }
 
@@ -96,5 +97,36 @@ impl Team {
 
         Ok(())
     }
+
+    //list_teams(path)
+    //description: lists all teams at path
+    //Params:
+    //  - path: option<String>, path with teams to list or default path
+    //Returns:  Vecor of DirEntrys with team names in dir given by the path param
+    fn list_teams(path: Option<String>) -> Result<Vec<std::fs::DirEntry>, Error> {
+        let path = match path {
+            Some(p) => p,
+            None => match Team::default_path() {
+                Ok(p) => p,
+                Err(e) => return Err(Error { kind: ErrorKind::List_saves, err_msg: e.err_msg }) 
+            }
+        };
+
+        let dir = match std::fs::read_dir(path) {
+            Ok(d) => d,
+            Err(e) => return Err(Error { kind: ErrorKind::List_saves, err_msg: e.to_string() })
+        };
+
+        let entries: Vec<std::fs::DirEntry> = dir
+            .filter(|e| e.is_ok())
+            .map(|e| e.unwrap())
+            .collect();
+
+        Ok(entries)
+    }
+
+    //load(path)
+    //description: loads team from save dir dir
+    //returns: team loaded from path or error
 
 }
