@@ -1,3 +1,5 @@
+use std::default;
+
 #[derive(Debug)]
 pub enum ErrorKind {
     Save,
@@ -103,7 +105,7 @@ impl Team {
     //Params:
     //  - path: option<String>, path with teams to list or default path
     //Returns:  Vecor of DirEntrys with team names in dir given by the path param
-    fn list_teams(path: Option<String>) -> Result<Vec<std::fs::DirEntry>, Error> {
+    pub fn list_teams(path: Option<String>) -> Result<Vec<std::fs::DirEntry>, Error> {
         let path = match path {
             Some(p) => p,
             None => match Team::default_path() {
@@ -126,7 +128,12 @@ impl Team {
     }
 
     //load(path)
-    //description: loads team from save dir dir
+    //description: loads team from save dir path
     //returns: team loaded from path or error
+    pub fn load(path: &std::fs::DirEntry) -> Result<Self, Error> {
+        let team = Team::new(path.file_name().into_string().unwrap_or(format!("badname")));
+
+        Ok(team)
+    }
 
 }
