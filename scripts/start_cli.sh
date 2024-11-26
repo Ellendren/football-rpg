@@ -1,10 +1,9 @@
 #!/bin/bash
 
-debug_target="./target/debug/football-rpg"
-release_target="./target/release/football-rpg"
+pwd=$(pwd)
+debug_target="$pwd/target/debug/football-rpg"
+release_target="$pwd/target/release/football-rpg"
 target=$debug_target
-
-quote=\"
 
 usage() { echo "Usage: $0 [options]"; exit 1; }
 

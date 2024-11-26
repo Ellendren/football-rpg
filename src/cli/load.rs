@@ -1,3 +1,3 @@
 pub fn load() {
-    super::player::load();
+    super::team::load();
 }

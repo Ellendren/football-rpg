@@ -4,6 +4,7 @@ use strum_macros::EnumIter;
 mod new_game;
 mod load;
 mod player;
+mod team;
 
 struct NewGame;
 

@@ -1,7 +1,7 @@
 use crate::stats::player::{self, Player};
 use colored::Colorize;
 
-pub fn new() {
+pub fn new() -> player::Player {
     println!("Creating new player");
     println!("\nEnter pc details");
 
@@ -15,14 +15,8 @@ pub fn new() {
     let charisma = attribute_prompt(&format!("charisma"), &mut buf);
     let awareness = attribute_prompt(&format!("awareness"), &mut buf);
 
-    let player = player::Player::new(speed, strength, agility, reaction, charisma, awareness, Some(fname), Some(lname));
-    match player.save() {
-        Ok(_) => println!("Save Succesful!"),
-        Err(e) => {
-            let err_msg = format!("{}: {:?}", "Error saving file".red(), e);
-            eprintln!("{}", err_msg)
-        }
-    };
+    let player = player::Player::new_pc(speed, strength, agility, reaction, charisma, awareness, Some(fname), Some(lname));
+    player
 }
 
 pub fn load(){

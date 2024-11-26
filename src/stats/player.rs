@@ -159,6 +159,21 @@ impl Player {
         }
     }
 
+    pub fn new_pc(
+        speed: Option<u16>,
+        strength: Option<u16>,
+        agility: Option<u16>,
+        reaction: Option<u16>,
+        charisma: Option<u16>,
+        awarness: Option<u16>,
+        fname: Option<String>,
+        lname: Option<String>
+    ) -> Self{
+        let mut player = Player::new(speed, strength, agility, reaction, charisma, awarness, fname, lname);
+        player.id = IDType::PC(0);
+        player
+    }
+
     //pub fn save(&self) -> Result<(), Error>
     //description: saves the player to a file with the name <lname>_<fname>_<ID>.player
     //returns: Ok if the save was succesful;
@@ -284,7 +299,7 @@ impl Player {
     //params:
     //  save_path: path to the directory for the save file, None for defaulr path
     //returns: the path to the save file
-    fn save_file_name(&self, save_path: Option<String>) -> Result<String, Error> {
+    pub fn save_file_name(&self, save_path: Option<String>) -> Result<String, Error> {
         let mut save_path = match Player::dafault_save_name(save_path) {
             Ok(path) => path,
             Err(e) => return Err(Error::Save { err_msg: format!("failed to get defaut path for player {}: {}", self.id, e.err_msg) })
