@@ -1,6 +1,6 @@
 use std::default;
 
-use super::player;
+use super::player::{self, Player};
 
 #[derive(Debug)]
 pub enum ErrorKind {
@@ -67,7 +67,7 @@ impl Team {
             Err(e) => return Err(Error{err_msg: e.to_string(), kind: ErrorKind::Save})
         };
 
-        for player in &self.players {
+        for (i, player) in self.players.iter().enumerate() {
             match player.save(){
                 Ok(_) => {},
                 Err(e) => {
@@ -77,7 +77,8 @@ impl Team {
                 }
             };
             let player_file = player.save_file_name(None).unwrap();
-            let playe_ln = team_dir.clone() + "/" + player_file.split('/').last().unwrap();
+            let playe_ln = format!("{}/{}_{}",team_dir.clone(), "player" ,i);
+            
             match std::path::Path::new(&playe_ln).try_exists() {
                 Ok(res) => {
                     if !res{
@@ -139,7 +140,29 @@ impl Team {
     //description: loads team from save dir path
     //returns: team loaded from path or error
     pub fn load(path: &std::fs::DirEntry) -> Result<Self, Error> {
-        let team = Team::new(path.file_name().into_string().unwrap_or(format!("badname")));
+        let mut players = Vec::new();
+        let dir = match Team::list_teams(Some(path.path().to_str().unwrap_or("badname").to_string())) {
+            Ok(d) => d,
+            Err(e) =>return Err(e)
+        };
+
+        for entry in dir {
+            let file = std::fs::canonicalize(entry.path());
+            if file.is_ok() {
+                let file_name = file.unwrap().as_mut_os_string().to_str().unwrap().to_string();
+                match Player::load(Some(file_name)) {
+                    Ok(p) => players.push(Box::new(p)),
+                    Err(_e) => {}
+                };
+            }
+        }
+
+        let name = path.file_name().into_string().unwrap_or("badnmae".to_string());
+        
+        let team = Team {
+            name,
+            players
+        };
 
         Ok(team)
     }
